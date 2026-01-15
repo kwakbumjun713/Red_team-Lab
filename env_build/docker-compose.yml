@@ -31,7 +31,6 @@ services:
       db:
         condition: service_healthy
 
-  # 1회성 초기화: 사이트 설치 + admin 계정 생성 + canto 활성화
   wpcli-init:
     image: wordpress:cli
     container_name: wpcli_init

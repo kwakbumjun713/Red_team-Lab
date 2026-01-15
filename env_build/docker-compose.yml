@@ -1,0 +1,57 @@
+services:
+  db:
+    image: mysql:5.7
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_DATABASE: wpdb
+      MYSQL_USER: wp
+      MYSQL_PASSWORD: wppass
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  wp:
+    build: .
+    container_name: wp
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wppass
+      WORDPRESS_DB_NAME: wpdb
+    volumes:
+      - wp:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 1회성 초기화: 사이트 설치 + admin 계정 생성 + canto 활성화
+  wpcli-init:
+    image: wordpress:cli
+    container_name: wpcli_init
+    depends_on:
+      wp:
+        condition: service_started
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wppass
+      WORDPRESS_DB_NAME: wpdb
+    volumes:
+      - wp:/var/www/html
+      - ./init-wp.sh:/init-wp.sh:ro
+      - ./plugins:/plugins:ro
+    entrypoint: ["sh", "/init-wp.sh"]
+    restart: "no"
+
+volumes:
+  mysql:
+  wp:

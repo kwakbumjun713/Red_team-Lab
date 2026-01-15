@@ -1,6 +1,8 @@
 services:
   db:
     image: mysql:5.7
+    # mysql:5.7 is amd64-only; force amd64 so Apple Silicon (arm64) can run it via emulation.
+    platform: linux/amd64
     container_name: mysql_db
     environment:
       MYSQL_ROOT_PASSWORD: toor
